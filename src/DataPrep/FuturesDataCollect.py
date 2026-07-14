@@ -55,7 +55,7 @@ class FuturesDataCollect:
             path: str,
             df  : pd.DataFrame) -> pd.DataFrame: 
         
-        read_path    = os.path.join(path, "LeftOverFutures.xlsx")
+        read_path    = os.path.join(path, "LeftOverFutures.xlsx")        
         sheet_names  = pd.ExcelFile(path_or_buffer = read_path).sheet_names
         df_tmp_guide = (df.assign(
             tmp = lambda x: x.ticker.str.split("1").str[0].str.strip()).
@@ -210,7 +210,8 @@ class FuturesDataCollect:
         
         df_other = (pd.read_parquet(
             path = other_paths, engine = "pyarrow").
-            rename(columns = {"security": "ticker"}))
+            rename(columns = {"security": "ticker"}).
+            query("ticker != 'EO1 Index'"))
         
         df_extra_equity1 = self._get_extra_equity1(eq_path)
         
@@ -540,9 +541,17 @@ class FuturesDataCollect:
             "ticker == @fx_names").
             assign(fx_ticker = lambda x: x.ticker.str[0:3])
             [["date", "fx_ticker", "value"]].
-            rename(columns = {"value": "fx_val"}))
+            rename(columns = {"value": "fx_val"}).
+            assign(fx_val = lambda x: x.fx_val.astype(float)).
+            drop_duplicates())
+
+        fx_map = (df_ticker_guide[
+            ["ticker", "currency"]].
+            drop_duplicates().
+            set_index("ticker").
+            currency.
+            to_dict())
         
-        fx_map = df_ticker_guide.set_index("ticker").currency.to_dict()
         df_out = (df_px.assign(
             fx_ticker = lambda x: x.ticker.map(fx_map)).
             merge(right = df_fx, how = "left", on = ["date", "fx_ticker"]).
@@ -562,7 +571,7 @@ def main() -> None:
         
     fx_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG"
     fut_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG\Prices"
-    extra_path = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260618FuturesVolsTmp"
+    extra_path = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260618FuturesVolsTmp\tmp"
     eq_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\EquityFutures"
     fx1_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\FX"
     
