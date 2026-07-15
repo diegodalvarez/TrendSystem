@@ -23,6 +23,9 @@ class TrendIndicesDataPrep:
     
     def _get_barclays(self, df_tickers: pd.DataFrame) -> pd.DataFrame: 
         
+        path = os.path.join(self.db_path, "PX", "Barclays.parquet")
+        
+        
         tickers = (df_tickers.query(
             "File == 'Barclays'").
             Ticker.
@@ -30,18 +33,25 @@ class TrendIndicesDataPrep:
             sort_values().
             to_list())
         
-        path   = os.path.join(self.db_path, "PX", "Barclays.parquet")
-        df_out = (pd.read_parquet(
+        df1 = (pd.read_parquet(
             path = path, engine = "pyarrow").
-            assign(
-                tmp      = lambda x: x.variable.str.split(" ").str.len(),
-                security = lambda x: np.where(x.tmp == 1, x.variable + " Index", x.variable)).
-            drop(columns = ["variable", "tmp"]).
-            drop_duplicates().
-            rename(columns = {"value": "PX_LAST"}).
-            query("security == @tickers").
-            rename(columns = {"Date": "date"}))
+            query("variable == @tickers"))
         
+        extra_tickers = list(set(tickers) - set(df1.variable.drop_duplicates().to_list()))
+        tickers_tmp   = [ticker.split(" ")[0] for ticker in extra_tickers]
+        
+        df2 = (pd.read_parquet(
+            path = path, engine = "pyarrow").
+            query("variable == @tickers_tmp").
+            assign(variable = lambda x: x.variable + " Index"))
+        
+        df_out = (pd.concat([
+            df1, df2]).
+            rename(columns = {
+                "Date"    : "date",
+                "variable": "security",
+                "value"   : "PX_LAST"}))
+
         return df_out
     
     def _get_px(self, df_tickers: pd.DataFrame, file_name: str) -> pd.DataFrame: 

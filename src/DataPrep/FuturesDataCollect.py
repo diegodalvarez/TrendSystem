@@ -416,12 +416,11 @@ class FuturesDataCollect:
         
         '''
         Cleans bad data within futures  data
-        need to implement a commodities cleaner
         '''
         
         raw_path    = os.path.join(self.px_path, "RawFuturesPX.parquet")
         ticker_path = os.path.join(self.data_path, "TickerGuide.xlsx")
-        out_path    = os.path.join(self.px_path, "CleanedRawFuturesPX.parquet")
+        out_path    = os.path.join(self.px_path, "CleanedFuturesPX.parquet")
         
         if verbose: 
             print("Getting cleaned data")
@@ -445,8 +444,8 @@ class FuturesDataCollect:
             dropna().
             assign(yahoo_underlying = lambda x: x.yahoo_underlying.replace("TX60.TS", "SPTSX60")))
         
-        df_eq        = df_tmp.query("ending == 'Index'")
-        df_noneq     = df_tmp.query("ending != 'Index'")
+        df_eq   = df_tmp.query("ending == 'Index'")
+        df_noneq = df_tmp.query("ending != 'Index'")
         
         df_clean_eq1 = self._clean_equity_futures1(df_eq, df_eq_ticker)
         df_clean_eq2 = self._clean_equity_futures2(df_clean_eq1)
@@ -517,7 +516,7 @@ class FuturesDataCollect:
             date.
             min())
         
-        px_path = os.path.join(self.px_path, "CleanedRawFuturesPX.parquet")
+        px_path = os.path.join(self.px_path, "CleanedFuturesPX.parquet")
         df_px   = pd.read_parquet(path = px_path, engine = "pyarrow")
         
         ticker_path     = os.path.join(self.data_path, "TickerGuide.xlsx")
@@ -557,7 +556,7 @@ class FuturesDataCollect:
             merge(right = df_fx, how = "left", on = ["date", "fx_ticker"]).
             assign(
                 fx_val  = lambda x: np.where(x.fx_ticker == "USD", 1, x.fx_val).astype(float),
-                adj_val = lambda x: x.fx_val * x.PX_LAST,
+                adj_val = lambda x: x.fx_val * x.CLEAN_PX,
                 ticker  = lambda x: x.ticker.str.lower().str.replace(" 1", "1").str.strip().str.replace(" ", "_")).
             query("date <= @end_date").
             assign(ticker = lambda x: x.ticker.str.strip()))
@@ -576,8 +575,8 @@ def main() -> None:
     fx1_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\FX"
     
     fut_collect = FuturesDataCollect()
-    fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
-    fut_collect.clean_futures()
+    #fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
+    #fut_collect.clean_futures()
     fut_collect.prep_fut_px(fx_path, fx1_path)
     
 if __name__ == "__main__": main()
