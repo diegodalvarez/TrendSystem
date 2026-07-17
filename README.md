@@ -11,3 +11,5 @@ Research notebooks exploring the relationship between equity implied correlation
 
 - **Equity Implied Correlation Analysis:** [1EquityImpliedCorrelation.ipynb](https://github.com/diegodalvarez/TrendSystem/blob/main/Research/MiscResearch/1EquityImpliedCorrelation.ipynb)
 - **Implied Correlation Signal Research:** [1ImpliedCorrelation.ipynb](https://github.com/diegodalvarez/TrendSystem/blob/main/Research/SignalResearch/1ImpliedCorrelation.ipynb)
+
+arxiv.org/abs/1607.02410
