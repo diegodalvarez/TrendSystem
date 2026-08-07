@@ -19,8 +19,13 @@ class FuturesDataCollect:
         self.root_path = os.path.abspath(os.path.join(self.src_path, ".."))
         self.data_path = os.path.join(self.root_path, "data")
         self.px_path   = os.path.join(self.data_path, "FuturesData")
+        self.cftc_path = os.path.join(self.data_path, "CFTC")
         
-        if os.path.exists(self.px_path) == False: os.makedirs(self.px_path)
+        if not os.path.exists(self.px_path): 
+            os.makedirs(self.px_path)
+        
+        if not os.path.exists(self.cftc_path):
+            os.makedirs(self.cftc_path)
         
         self.eq_bad_tickers1 = [
             "HI1 Index", "IB1 Index", "PT1 Index", "QC1 Index", "SM1 Index"]
@@ -566,6 +571,32 @@ class FuturesDataCollect:
             
         df_out.to_parquet(path = out_path, engine = "pyarrow")
         
+    def get_cftc(self, cftc_path: str, verbose: bool = True) -> None: 
+        
+        if verbose: print("Getting CFTC data")
+        
+        val_path  = os.path.join(cftc_path, "CFTCData.parquet")
+        tick_path = os.path.join(self.cftc_path, "CFTCTickers.xlsx")
+        out_path  = os.path.join(self.cftc_path, "CFTCData.parquet")
+        
+        if os.path.exists(out_path):
+            if verbose: print("Already have data\n")
+            return None
+        
+        df_ticker = (pd
+                .read_excel(io = tick_path)
+                .drop(columns = ["fut_type", "asset_class"])
+                .rename(columns = {
+                    "ticker": "security",
+                    "Name"  : "name"}))
+        
+        df_out = (pd
+                .read_parquet(path = val_path, engine = "pyarrow")
+                .merge(right = df_ticker, how = "inner",on = ["security"]))
+        
+        if verbose: print("Saving data\n")
+        df_out.to_parquet(path = out_path, engine = "pyarrow")
+        
 def main() -> None: 
         
     fx_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG"
@@ -573,10 +604,13 @@ def main() -> None:
     extra_path = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260618FuturesVolsTmp\tmp"
     eq_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\EquityFutures"
     fx1_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\FX"
+    cftc_path  = r"A:\2026BlpAdHocData\Combined\PX"
     
     fut_collect = FuturesDataCollect()
     #fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
     #fut_collect.clean_futures()
-    fut_collect.prep_fut_px(fx_path, fx1_path)
+    #fut_collect.prep_fut_px(fx_path, fx1_path)
+    
+    fut_collect.get_cftc(cftc_path)
     
 if __name__ == "__main__": main()

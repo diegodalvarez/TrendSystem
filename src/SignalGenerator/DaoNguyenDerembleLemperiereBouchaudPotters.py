@@ -71,7 +71,7 @@ class EWMASignal:
 
         in_path  = os.path.join(self.data_path, "FuturesData", "PrepFuturesPX.parquet")
         out_path = os.path.join(self.signal_path, "DaoNguyenDerembleLemperiereBouchaudPotters.parquet")
-        
+
         if verbose: 
             print("Getting EWMA Signal")
             
