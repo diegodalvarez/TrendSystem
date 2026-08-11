@@ -121,3 +121,36 @@ class AQTools:
             set_index("variable"))
         
         return df_stats
+    
+    def get_top_n_drawdowns(self, rtn: pd.Series, n: int = 3) -> pd.DataFrame:
+        
+        df_rtn = (rtn
+                .to_frame(name = "rtn")
+                .assign(cuml_rtn = lambda x: np.cumprod(1 + x.rtn) * 100))
+        
+        df_lists = []
+        
+        for i in range(n):
+            
+            drawdown_info = self.drawdown(df_rtn.cuml_rtn)
+            df_add        = (pd.DataFrame
+                    .from_dict(
+                        data   = drawdown_info,
+                        orient = "index")
+                    .T
+                    .assign(drawdown = i + 1)
+                    .set_index("drawdown"))
+            
+            start_date, end_date = drawdown_info["start_date"], drawdown_info["end_date"]
+            
+            df_rtn = (df_rtn
+                    .drop(columns = ["cuml_rtn"])
+                    .reset_index()
+                    .assign(rtn = lambda x: np.where(x.date.between(start_date, end_date), 0, x.rtn))
+                    .set_index("date")
+                    .assign(cuml_rtn = lambda x: np.cumprod(1 + x.rtn) * 100))
+            
+            df_lists.append(df_add)
+            
+        df_out = pd.concat(df_lists)
+        return df_out
