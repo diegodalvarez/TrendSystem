@@ -607,10 +607,9 @@ def main() -> None:
     cftc_path  = r"A:\2026BlpAdHocData\Combined\PX"
     
     fut_collect = FuturesDataCollect()
-    #fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
-    #fut_collect.clean_futures()
-    #fut_collect.prep_fut_px(fx_path, fx1_path)
-    
+    fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
+    fut_collect.clean_futures()
+    fut_collect.prep_fut_px(fx_path, fx1_path)
     fut_collect.get_cftc(cftc_path)
     
 if __name__ == "__main__": main()
