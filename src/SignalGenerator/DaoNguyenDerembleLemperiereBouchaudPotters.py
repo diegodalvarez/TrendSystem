@@ -14,11 +14,11 @@ class EWMASignal:
     
     def __init__(self) -> None: 
         
-        self.signal_path = os.getcwd()
-        self.src_path    = os.path.abspath(os.path.join(self.signal_path, ".."))
-        self.repo_path   = os.path.abspath(os.path.join(self.src_path, ".."))
-        self.data_path   = os.path.join(self.repo_path, "data")
-        self.signal_path = os.path.join(self.data_path, "Signals")
+        self.sig_src_path = os.getcwd()
+        self.src_path     = os.path.abspath(os.path.join(self.sig_src_path, ".."))
+        self.repo_path    = os.path.abspath(os.path.join(self.src_path, ".."))
+        self.data_path    = os.path.join(self.repo_path, "data")
+        self.signal_path  = os.path.join(self.data_path, "Signals")
         
         self.trend_window  = 180
         self.hetero_window = 10

@@ -87,7 +87,7 @@ class CreditKalmanFilter:
                 .dropna()
                 .assign(log_spread = lambda x: np.log(x.spread))
                 .set_index("date")
-                .loc[lambda x: x.SecurityGroup == x.SecurityGroup.min()]
+                #.loc[lambda x: x.SecurityGroup == x.SecurityGroup.min()]
                 .groupby("SecurityGroup")
                 .apply(self._get_kf)
                 #.progress_apply(lambda group: self._get_kf(group))
