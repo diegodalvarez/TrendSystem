@@ -84,12 +84,10 @@ class CreditHPFilter:
                 .dropna()
                 .assign(log_spread = lambda x: np.log(x.spread))
                 .set_index("date")
-                .loc[lambda x: x.SecurityGroup == x.SecurityGroup.min()]
+                #.loc[lambda x: x.SecurityGroup == x.SecurityGroup.min()]
                 .groupby("SecurityGroup")
-                .apply(self._get_hp_filter))
-        
-        display(df_hp)
-        return-1
+                .apply(self._get_hp_filter)
+                .reset_index())
 
         if verbose: print("Saving Data\n")
         df_hp.to_parquet(path = out_path, engine = "pyarrow")
