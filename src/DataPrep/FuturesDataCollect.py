@@ -480,10 +480,17 @@ class FuturesDataCollect:
     def _get_fx1(self, path: str) -> pd.DataFrame: 
         
         in_path = os.path.join(path, "FX.xlsx")
+        
+        print(in_path)
+        return-1
+        
         df_raw  = (pd.read_excel(
             io = in_path).
             rename(columns = {"Date": "date"}).
             set_index("date"))
+        
+        print("hit2")
+        return-1
         
         df_raw.columns = [
             col.replace("BGN", "").split("(")[0].strip().replace("  "," ") 
@@ -537,8 +544,19 @@ class FuturesDataCollect:
         
         fx_read_path = os.path.join(fx_path, "FX.parquet")
         
+        print(fx_path)
+        return-1
+        
         df_fx_orig = pd.read_parquet(path = fx_read_path, engine = "pyarrow")
+        
+        print("hit3")
+        return-1
+        
         df_fx1     = self._get_fx1(fx_path1)
+        
+        print("hit1")
+        return-1
+        
         df_fx_raw  = pd.concat([df_fx_orig, df_fx1])
     
         df_fx = (df_fx_raw.query(
@@ -607,9 +625,9 @@ def main() -> None:
     cftc_path  = r"A:\2026BlpAdHocData\Combined\PX"
     
     fut_collect = FuturesDataCollect()
-    fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
-    fut_collect.clean_futures()
+    #fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
+    #fut_collect.clean_futures()
     fut_collect.prep_fut_px(fx_path, fx1_path)
-    fut_collect.get_cftc(cftc_path)
+    #fut_collect.get_cftc(cftc_path)
     
 if __name__ == "__main__": main()
