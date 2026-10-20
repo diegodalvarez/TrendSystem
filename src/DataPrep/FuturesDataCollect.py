@@ -180,7 +180,7 @@ class FuturesDataCollect:
                         to_list())
         
         df_fx_fut1 = self._get_extra_fx_fut(fx1_path)
-            
+        
         df_extra = (self._get_left_over_futures(
             leftover_path, df_ticker_guide).
             rename(columns = {
@@ -213,8 +213,10 @@ class FuturesDataCollect:
                 values  = "value").
             reset_index())
         
+        other_paths_ = [file for file in other_paths if file.split(".")[-1] == "parquet"]
+        
         df_other = (pd.read_parquet(
-            path = other_paths, engine = "pyarrow").
+            path = other_paths_, engine = "pyarrow").
             rename(columns = {"security": "ticker"}).
             query("ticker != 'EO1 Index'"))
         
@@ -231,6 +233,9 @@ class FuturesDataCollect:
         
         if verbose: 
             print("Saving Raw Data")
+            
+        display(df_raw_px)
+        return-1
             
         df_raw_px.to_parquet(path = out_path, engine = "pyarrow")
         
@@ -518,8 +523,7 @@ class FuturesDataCollect:
                 
             return None
         
-        in_path  = os.path.join(self.px_path, "RawFuturesPX.parquet")
-        
+        in_path  = os.path.join(self.px_path, "RawFuturesPX.parquet")        
         end_date = (pd.read_parquet(
             path = in_path, engine = "pyarrow")
             [["ticker", "date"]].
@@ -618,16 +622,16 @@ class FuturesDataCollect:
 def main() -> None: 
         
     fx_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG"
-    fut_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG\Prices"
-    extra_path = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260618FuturesVolsTmp\tmp"
+    fut_path   = r"A:\2026BlpAdHocData\Combined\Futures"
+    extra_path = r"A:\2026BlpAdHocData\Combined\Futures"
     eq_path    = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\EquityFutures"
-    fx1_path   = r"C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\FX"
+    fx1_path   = r"A:\2026BlpAdHocData\Combined\Futures\FX"
     cftc_path  = r"A:\2026BlpAdHocData\Combined\PX"
     
     fut_collect = FuturesDataCollect()
-    #fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
+    fut_collect.get_raw_fut_px(fut_path, extra_path, eq_path, fx1_path)
     #fut_collect.clean_futures()
-    fut_collect.prep_fut_px(fx_path, fx1_path)
+    #fut_collect.prep_fut_px(fx_path, fx1_path)
     #fut_collect.get_cftc(cftc_path)
     
 if __name__ == "__main__": main()
