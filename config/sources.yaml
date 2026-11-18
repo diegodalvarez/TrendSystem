@@ -1,0 +1,398 @@
+# TrendSystem data sources
+# -----------------------------------------------------------------------------
+# This is the ONLY file where machine-specific absolute paths live.
+# Edit it by hand.
+#
+# Filled in 2026-11-08 from every path hardcoded in src/DataPrep/*.py.
+# Names are suggestions - rename, merge or delete entries freely.
+#
+# Fields per source:
+#   root      absolute path to the folder (single quotes keep the backslashes)
+#   group     batch name used by the spider's test settings below:
+#             adhoc, bbgdata, weekly, yahoo, old_data, firstrate, other
+#   vendor   who the data came from: bbg, yahoo, thetadata, cboe, firstratedata, other
+#   category  price      -> prices / returns (current focus)
+#             non_price  -> spreads, correlations, positioning, fundamentals
+#   mode      full        -> spider also reads file structure only
+#                            (columns, row counts, date ranges, tickers; never price values)
+#             names_only  -> spider records names, sizes, dates only
+#             (both modes list the file names inside .zip files; nothing is extracted)
+#   include   optional glob patterns (relative to root) to limit a crawl
+#   exclude   optional glob patterns to skip
+#   holds     what is in it, as far as the code shows
+#   files     files the current code reads from it (others may exist)
+#   used_by   script.method that reads it today
+#   notes     anything odd found while reading the code
+#
+# Leave `root: ''` to switch an entry off.
+# -----------------------------------------------------------------------------
+
+paths:
+  # Relative to the repo root unless absolute.
+  data_root: data           # the new versioned store (built from scratch)
+  catalog:   data/catalog   # registry.xlsx, inventories, manifests (tracked in git)
+  old_data:  old_data       # GUIDE ONLY: never a data source; will be deleted
+
+# -----------------------------------------------------------------------------
+# Spider test settings - edit these to work through the sources step by step.
+# Command-line options override them (see the top of scripts/spider_sources.py).
+# -----------------------------------------------------------------------------
+
+spider:
+  # Which groups to crawl. [] = every source that has a root.
+  groups: [adhoc, bbgdata, old_data, firstrate]
+
+  # How many files per source get OPENED (zip contents / file structure).
+  # File names, sizes and dates are always listed for every file - that is fast
+  # and reads nothing. 0 = no limit (open every file).
+  max_files_per_source: 0
+
+  # Which files are picked when there is a limit:
+  #   spread -> spread across the folder and across file types; raising the
+  #             limit later keeps the files already picked and adds more
+  #   first  -> the first N in alphabetical order
+  sample: spread
+
+sources:
+
+  # ===========================================================================
+  # Bloomberg - A:\2026BlpAdHocData\Combined  (main ad hoc pulls)
+  # ===========================================================================
+
+  bbg_adhoc_futures:
+    root: 'A:\2026BlpAdHocData\Combined\Futures'
+    group: adhoc
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: ['FX/**']      # FX subfolder is its own entry below
+    holds: 'Generic front-month futures prices, one parquet per exchange, plus leftover roots in Excel'
+    files:
+      - '1*Px.parquet  (one per exchange, e.g. 1CboeFuturesExchangePx, 1NewYorkMercantileExchangePx, 1OsakaExchangePx)'
+      - 'LeftOverFutures.xlsx  (one sheet per root ticker; Date, Last Px)'
+    used_by:
+      - FuturesDataCollect.get_raw_fut_px        # fut_path and extra_path both point here
+      - FuturesDataCollect._get_left_over_futures
+    notes: >
+      Three layouts in one folder: the CBOE file is long (date, security, PX_LAST);
+      NYMEX and Osaka are long by field (date, ticker, field, value) and get pivoted;
+      the rest are read as-is. EO1 Index is dropped. Volume1.parquet also lives here
+      (read by the Kurth whitepaper notebook, not by DataPrep).
+
+  bbg_adhoc_futures_fx:
+    root: 'A:\2026BlpAdHocData\Combined\Futures\FX'
+    group: adhoc
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'FX futures prices and FX spot rates (Excel)'
+    files:
+      - 'FXFutures.xlsx  (sheet PX_LAST, wide, headers like "XX1 COMB Curncy (desc)")'
+      - 'FX.xlsx  (wide spot FX, headers like "EURUSD BGN Curncy (desc)")'
+    used_by:
+      - FuturesDataCollect._get_extra_fx_fut
+      - FuturesDataCollect.prep_fut_px -> _get_fx1
+    notes: >
+      EquityIndices reads its FX.xlsx from WeekyNotebooks\20260705TmpFutures\FX instead
+      (entry bbg_wn_20260705_fx). Check whether the two FX.xlsx files are the same.
+
+  bbg_adhoc_px:
+    root: 'A:\2026BlpAdHocData\Combined\PX'
+    group: adhoc
+    vendor: bbg
+    category: price         # mixed: also holds non-price files, see holds
+    mode: full
+    include: []
+    exclude: []
+    holds: >
+      Long-format parquet per dataset: trend indices (price), CDS series (price + spread),
+      implied/realized correlation (non-price), CFTC positioning (non-price)
+    files:
+      - 'Barclays, BloombergTrend, BNP, BofA, CITI1, CommodTrend, DBTrend, TrendIndices  (.parquet; trend indices, tickers from TrendIndicesGuide.xlsx)'
+      - '<File>.parquet for credit rows with Source == source2 in TickerGuide.xlsx sheet credit  (CDS)'
+      - 'EquityImpliedCorrelation.parquet, EquityRealizedCorrelation.parquet'
+      - '<File>.parquet named in ImpliedCorrelationTickerGuide.xlsx sheet CBOEGuide  (CBOE implied correlation)'
+      - 'CFTCData.parquet'
+    used_by:
+      - TrendIndicesPrep.get_raw_trend_indices
+      - CreditIndices.collect_raw_cds_data       # source2
+      - ImpliedCorrelationPrep.get_raw_cboe_corr
+      - ImpliedCorrelationPrep.get_raw_bloomberg_corr
+      - FuturesDataCollect.get_cftc
+    notes: >
+      Notebooks also read hf_indices.parquet and EquityIndices.parquet from here.
+      Barclays.parquet uses Date/variable/value; most others use date/security/... .
+      CBOE correlation values are stored x100 and divided by 100 on read.
+
+  # ===========================================================================
+  # Bloomberg - A:\BBGData
+  # ===========================================================================
+
+  bbg_data:
+    root: 'A:\BBGData\data'
+    group: bbgdata
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'CDS series, long format'
+    files:
+      - '<File>.parquet for credit rows with Source == source1 in TickerGuide.xlsx sheet credit'
+    used_by:
+      - CreditIndices.collect_raw_cds_data       # source1
+    notes: 'Probably holds more than CDS; the inventory step will show.'
+
+  bbg_etf_bond_pricing:
+    root: 'A:\BBGData\ETFIndices\BondPricing'
+    group: bbgdata
+    vendor: bbg
+    category: non_price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Credit ETF fundamentals (long format, security names like "TICKER US Equity")'
+    files:
+      - '<File>.parquet for credit rows with AssetClass == CreditETF in TickerGuide.xlsx sheet credit'
+    used_by:
+      - CreditIndices.collect_raw_credit_etf     # source3
+    notes: 'ETF prices themselves come from Yahoo (entry yahoo_credit_etf).'
+
+  # ===========================================================================
+  # Bloomberg - one-off pulls in C:\Users\Diego\Desktop\WeekyNotebooks
+  # ===========================================================================
+
+  bbg_wn_20260705_equity_futures:
+    root: 'C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\EquityFutures'
+    group: weekly
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Equity index futures (Fut*.xlsx) and equity index spot price + total return (Spo*.xlsx)'
+    files:
+      - 'Fut*.xlsx  (sheet PX_LAST, wide, headers like "XX1 COMB Index (desc)")'
+      - 'Spo*.xlsx  (sheets PX_LAST and RT112 = daily total return in %)'
+    used_by:
+      - FuturesDataCollect._get_extra_equity1    # Fut* files
+      - EquityIndices._get_eq1                   # Spo* files (path1)
+    notes: 'Two different datasets share this folder, split by file-name prefix.'
+
+  bbg_wn_20260607_equity_indices:
+    root: 'C:\Users\Diego\Desktop\WeekyNotebooks\20260607EquityIndicesTmp'
+    group: weekly
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Equity index spot price + total return'
+    files:
+      - '*.xlsx  (every file; sheets PX_LAST and RT112; headers are bare tickers, " Index" appended in code)'
+    used_by:
+      - EquityIndices._get_eq2                   # path2
+    notes: ''
+
+  bbg_wn_20260609_fx:
+    root: 'C:\Users\Diego\Desktop\WeekyNotebooks\20260609LastBBG'
+    group: weekly
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'FX spot rates, long format (date, ticker, value)'
+    files:
+      - 'FX.parquet'
+    used_by:
+      - EquityIndices.get_prep_eq                # fx_path
+      - FuturesDataCollect.prep_fut_px           # fx_path
+    notes: 'Combined with an FX.xlsx (bbg_adhoc_futures_fx or bbg_wn_20260705_fx) to extend coverage.'
+
+  bbg_wn_20260705_fx:
+    root: 'C:\Users\Diego\Desktop\WeekyNotebooks\20260705TmpFutures\FX'
+    group: weekly
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'FX spot rates (Excel, wide)'
+    files:
+      - 'FX.xlsx'
+    used_by:
+      - EquityIndices.get_prep_eq -> _get_fx1    # fx1_path
+    notes: 'Futures code reads FX.xlsx from bbg_adhoc_futures_fx instead.'
+
+  bbg_wn_20260422_credit_indices:
+    root: 'C:\Users\Diego\Desktop\WeekyNotebooks\20260422AprilDataCollect (passed)'
+    group: weekly
+    vendor: bbg
+    category: non_price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Credit index fields (one parquet per Bloomberg field, long format)'
+    files:
+      - 'DAY_TO_DAY_TOT_RETURN_GROSS_DVDS.parquet  (price-like: daily total return)'
+      - 'INDEX_OAC_TSY, INDEX_OAS_SWAP_BP, INDEX_OAS_TSY_BP, INDEX_SPREAD_BENCHMARK, INDEX_YIELD_TO_MATURITY, INDEX_YIELD_TO_WORST, INDEX_Z_SPREAD_BP  (.parquet)'
+    used_by:
+      - CreditIndices.collect_raw_credit_indices # source4
+    notes: 'Code lists INDEX_OAC_TSY, INDEX_OAS_SWAP_BP and INDEX_OAS_TSY_BP twice, so they are loaded twice.'
+
+  bbg_wn_20260629_implied_corr:
+    root: ''                # was 'C:\Users\Diego\Desktop\WeekyNotebooks\20260629TemporaryImpliedCorrelation'
+    group: weekly
+    vendor: bbg
+    category: non_price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Implied correlation Excel (one sheet per window)'
+    files: []
+    used_by: []
+    notes: 'Commented out in ImpliedCorrelationPrep.main; switched off here. Fill root to include it.'
+
+  # ===========================================================================
+  # Yahoo Finance (downloaded live, no folder)
+  # ===========================================================================
+
+  yahoo_credit_etf:
+    root: ''                # no folder: pulled with yfinance at run time
+    group: yahoo
+    vendor: yahoo
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Credit ETF OHLCV, 2000-01-01 to 2026-08-01, auto_adjust=False'
+    files: []
+    used_by:
+      - CreditIndices.collect_raw_credit_etf
+    notes: >
+      Nothing on disk to crawl. The saved result is old_data/CreditData/RawCreditETF.parquet.
+      The equity spot prices in old_data/FuturesData/YahooFinanceEquitySpot.parquet also came
+      from Yahoo, but no DataPrep script downloads them.
+
+  # ===========================================================================
+  # old_data/ - GUIDE ONLY. Crawled so its contents can be compared with the
+  # real sources; nothing is ever pulled from it and the folder will be deleted.
+  # ===========================================================================
+
+  old_data_inputs:
+    root: 'A:\GitHub\TrendSystem\old_data'
+    group: old_data
+    vendor: other
+    category: price
+    mode: full
+    include: ['FuturesData/YahooFinanceEquitySpot.parquet', 'FuturesData/EquityIndexSpotPrices.xlsx']
+    exclude: []
+    holds: 'Spot prices used to clean equity index futures'
+    files:
+      - 'FuturesData/YahooFinanceEquitySpot.parquet  (yahoo; Date, ticker, Close)'
+      - 'FuturesData/EquityIndexSpotPrices.xlsx  (bbg; SPTSX60 column used)'
+    used_by:
+      - FuturesDataCollect._get_equity_spot_data
+    notes: 'Guide only. The real sources of these two files still need to be found and added as their own entries.'
+
+  old_data_raw_bloomberg:
+    root: 'A:\GitHub\TrendSystem\old_data\PriceData\RawBloomberg'
+    group: old_data
+    vendor: bbg
+    category: price
+    mode: full
+    include: []
+    exclude: []
+    holds: 'Copies of Bloomberg futures pulls (exchange files, IndividualContracts, OHCL1, Volume1, Prices1-3, ...)'
+    files: []
+    used_by: []
+    notes: 'Guide only. Looks like a copy of bbg_adhoc_futures plus extra files (IndividualContracts, OHCL1, Volume1, Prices1-3); the originals of the extras need to be found.'
+
+  # ===========================================================================
+  # FirstRate Data - G:\FirstRateData   (added 2026-11-08; details to fill in)
+  # mode is names_only until you decide the files may be opened for structure.
+  # ===========================================================================
+
+  firstrate_futures:
+    root: 'G:\FirstRateData\FutData'
+    group: firstrate
+    vendor: firstratedata
+    category: price
+    mode: names_only
+    include: []
+    exclude: []
+    holds: ''
+    files: []
+    used_by: []
+    notes: ''
+
+  firstrate_fx:
+    root: 'G:\FirstRateData\FXData'
+    group: firstrate
+    vendor: firstratedata
+    category: price
+    mode: names_only
+    include: []
+    exclude: []
+    holds: ''
+    files: []
+    used_by: []
+    notes: ''
+
+  firstrate_etf:
+    root: 'G:\FirstRateData\ETFData'
+    group: firstrate
+    vendor: firstratedata
+    category: price
+    mode: names_only
+    include: []
+    exclude: []
+    holds: ''
+    files: []
+    used_by: []
+    notes: ''
+
+  # ===========================================================================
+  # Not yet described
+  # ===========================================================================
+
+  proprietary:
+    root: ''
+    group: other
+    vendor: other
+    category: price
+    mode: names_only        # never opens files
+    include: []
+    exclude: []
+    holds: ''
+    files: []
+    used_by: []
+    notes: ''
+
+# -----------------------------------------------------------------------------
+# Reference files (ticker guides). Not data sources: they say WHICH files and
+# tickers to load. Listed so every path the code touches is in one place.
+# They live in old_data/, so they are guides for building the new catalogue only.
+# -----------------------------------------------------------------------------
+
+reference_files:
+  ticker_guide:
+    path: 'old_data/TickerGuide.xlsx'
+    sheets: ['fut_guide', 'credit']
+    used_by: [FuturesDataCollect, EquityIndices, CreditIndices]
+  trend_indices_guide:
+    path: 'old_data/TrendIndices/TrendIndicesGuide.xlsx'
+    sheets: ['TrendIndices', 'IndexReplication']
+    used_by: [TrendIndicesPrep]
+  implied_correlation_guide:
+    path: 'old_data/MiscData/ImpliedCorrelationTickerGuide.xlsx'
+    sheets: ['CBOEGuide']
+    used_by: [ImpliedCorrelationPrep]
+  cftc_tickers:
+    path: 'old_data/CFTC/CFTCTickers.xlsx'
+    sheets: []
+    used_by: [FuturesDataCollect.get_cftc]

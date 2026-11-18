@@ -1,3 +1,15 @@
-/data
+# New versioned data store: ignore everything except the catalog
+/data/*
+!/data/catalog/
+
+# Frozen legacy data (about 530 MB of parquet)
+/old_data/
+
 *.docx
 /tmp
+
+# Python
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
+/data
