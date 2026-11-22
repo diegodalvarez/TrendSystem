@@ -1,0 +1,1053 @@
+# Bloomberg -> price store (step 2.1)
+# -----------------------------------------------------------------------------
+# Used by scripts/build_bbg_store.py. Edit by hand.
+#
+# Each origin file becomes one stored series PER TICKER, in
+#   data/store/bbg/<dataset>/1day/<TICKER>/<origin_key>/v0001/data.parquet + manifest.json
+# Nothing is merged across files (each pull may be back-adjusted differently).
+#
+# Per origin:
+#   source           name from config/sources.yaml (gives the folder)
+#   file             file name or glob; the first entry that matches a file wins
+#   include          true / false
+#   dataset          fut_generic | fut_contract | fx_spot | fx_future | index_px
+#                    in fut_generic files, tickers that look like generics (ES1 Index,
+#                    C 2 Comdty) get their root and generic number recorded; other
+#                    files are not searched (detect_generics: true to force it)
+#   reader           auto (from the columns) | long_by_field | melted | melted_single |
+#                    wide_fields | excel_sheet_field | excel_sheet_ticker | excel_wide
+#   ticker / field_column / date / value   force column roles if auto gets them wrong
+#   field            fixed field for files without a field column (default PX_LAST)
+#   ticker_map       Excel sheet name -> ticker (excel_sheet_ticker)
+#   note             free text
+# -----------------------------------------------------------------------------
+
+# Run options (dry run, only, force) are at the top of scripts/build_bbg_store.py.
+
+store: data/store/bbg
+log_dir: data/store/_logs
+
+origins:
+
+  # ===========================================================================
+  # Combined\Futures  (source bbg_adhoc_futures)
+  # ===========================================================================
+
+  - source: bbg_adhoc_futures
+    file: '1CboeFuturesExchangePx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 2 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ChicagoBoardofTradePx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 15 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ChicagoMercantileExchangePx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 37 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1CommodityExchange,Inc.Px.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 6 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1EurexPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 19 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1EuronextDerivativesAmsterdamPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1EuronextDerivativesBrusselsPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1EuronextDerivativesLisbonPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1EuronextDerivativesParisPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 3 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEEndexPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesEuropeCommoditiesPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 3 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesEuropeFinancialsPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 4 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesUS-CanadianGrainsPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesUSCurrenciesPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesUSIndicesPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 3 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1ICEFuturesUSSoftsPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 5 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1JSEYield-XPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1MeffPowerPx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 1 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1NewYorkMercantileExchangePx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 8 tickers'
+
+  - source: bbg_adhoc_futures
+    file: '1OsakaExchangePx.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'exchange file, 2 tickers'
+
+  - source: bbg_adhoc_futures
+    file: 'EquityFutures.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'equity index futures; ticker is in "variable", field in "security"'
+
+  - source: bbg_adhoc_futures
+    file: 'FuturesImpliedVolatility.parquet'
+    include: false
+    dataset: index_px
+    note: 'implied vol, not price'
+
+  - source: bbg_adhoc_futures
+    file: 'FuturesPX.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 1 close back to 1960, 163 tickers'
+
+  - source: bbg_adhoc_futures
+    file: 'FXFutures.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'EM FX futures; field column is "tmp" (auto-detected)'
+
+  - source: bbg_adhoc_futures
+    file: 'IndividualContracts.parquet'
+    include: true
+    dataset: fut_contract
+    note: 'single contracts, PX_LAST/SETTLE/VOLUME/OPEN_INT; stored one file per root'
+
+  - source: bbg_adhoc_futures
+    file: 'LeftOverFutures.parquet'
+    include: true
+    dataset: fut_generic
+    detect_generics: false
+    note: 'tickers are bare roots (JB, XM, ...); generic number not in the file. Same data as LeftOverFutures.xlsx?'
+
+  - source: bbg_adhoc_futures
+    file: 'OHCL1.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 1 open/high/low/bid/ask, NO close'
+
+  - source: bbg_adhoc_futures
+    file: 'Prices1.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 1: close, OI, volume'
+
+  - source: bbg_adhoc_futures
+    file: 'Prices2.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 2 close'
+
+  - source: bbg_adhoc_futures
+    file: 'Prices3.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 3 close'
+
+  - source: bbg_adhoc_futures
+    file: 'PricesFurther.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generics 4+ close'
+
+  - source: bbg_adhoc_futures
+    file: 'Volume1.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic 1 settle, volume, OI, aggregate OI'
+
+  - source: bbg_adhoc_futures
+    file: 'LeftOverFutures.xlsx'
+    include: false
+    dataset: fut_generic
+    reader: excel_sheet_ticker
+    detect_generics: false
+    note: 'one sheet per root (Last Px, Open Int, Volume, Settle Px); looks like the same data as LeftOverFutures.parquet'
+
+  # ===========================================================================
+  # Combined\Futures\FX  (source bbg_adhoc_futures_fx)
+  # ===========================================================================
+
+  - source: bbg_adhoc_futures_fx
+    file: 'FX.xlsx'
+    include: false
+    dataset: fx_spot
+    reader: excel_wide
+    field: PX_LAST
+    note: '6 EM spot pairs; same tickers as Combined\PX\FX2.parquet. Set true to keep it as its own snapshot'
+
+  - source: bbg_adhoc_futures_fx
+    file: 'FXFutures.xlsx'
+    include: false
+    dataset: fut_generic
+    reader: excel_sheet_field
+    note: 'sheets PX_LAST / OPEN_INT / FUT_AGG_OPEN; looks like the same data as FXFutures.parquet'
+
+  - source: bbg_adhoc_futures_fx
+    file: 'FX1.xlsx'
+    include: false
+    dataset: fx_spot
+    reader: excel_wide
+    note: 'one column "Last Price" with no ticker in the header; ticker unknown'
+
+  # ===========================================================================
+  # Combined\PX  (source bbg_adhoc_px)
+  # Price files are in; curves, yields, auctions, sentiment, positioning,
+  # surprises, vol and correlation files are out. Flip include to change.
+  # ===========================================================================
+
+  - source: bbg_adhoc_px
+    file: '5y5yInfSwap.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'AAIISentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'AllRealizedCorrelation.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price / unusual layout'
+
+  - source: bbg_adhoc_px
+    file: 'AUDCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BakerHughes.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'Barclays.parquet'
+    include: true
+    dataset: index_px
+    note: 'Barclays strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'BBGEURInfSwap.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BBGUSDInfSwap.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BellwetherForSwapIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'swap indices (+ duration/OAS fields)'
+
+  - source: bbg_adhoc_px
+    file: 'BellwetherUSSwapIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'US swap indices (+ duration/OAS fields)'
+
+  - source: bbg_adhoc_px
+    file: 'BIFXNEER.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BISentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergCFTC.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergCommodSentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergDecomposition.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergFISentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergSentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergSurprise.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BloombergTrend.parquet'
+    include: true
+    dataset: index_px
+    note: 'trend indices'
+
+  - source: bbg_adhoc_px
+    file: 'BNP.parquet'
+    include: true
+    dataset: index_px
+    note: 'BNP strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'BNPRollingSwap.parquet'
+    include: true
+    dataset: index_px
+    note: 'BNP rolling swap indices'
+
+  - source: bbg_adhoc_px
+    file: 'BNPStraddle.parquet'
+    include: true
+    dataset: index_px
+    note: 'BNP straddle indices'
+
+  - source: bbg_adhoc_px
+    file: 'BofA.parquet'
+    include: true
+    dataset: index_px
+    note: 'BofA strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'BofAMLCredit.parquet'
+    include: true
+    dataset: index_px
+    note: 'BofA credit indices'
+
+  - source: bbg_adhoc_px
+    file: 'BreakevenRates.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BRLCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'BRLInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CADCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CADInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CanadianAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CDXCDSIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'CDX CDS indices (price)'
+
+  - source: bbg_adhoc_px
+    file: 'CFTCData.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'ChinaCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CITI1.parquet'
+    include: true
+    dataset: index_px
+    note: 'Citi strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'CitiEconomicSurprise.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CitiInflationSurprise.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'commod_px.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'commodity generic futures snapshot'
+
+  - source: bbg_adhoc_px
+    file: 'CommodTrend.parquet'
+    include: true
+    dataset: index_px
+    note: 'commodity trend indices'
+
+  - source: bbg_adhoc_px
+    file: 'COR1M.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CreditImpVol.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CreditInfo.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CurrencyVolatilities.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'CzechCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'DBRatesSwaption.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'DBTrend.parquet'
+    include: true
+    dataset: index_px
+    note: 'DB trend indices'
+
+  - source: bbg_adhoc_px
+    file: 'DeustcheBankCommod.parquet'
+    include: true
+    dataset: index_px
+    note: 'DB commodity indices'
+
+  - source: bbg_adhoc_px
+    file: 'em.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'EnergyDemand.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'EquityImpliedCBOE.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'EquityImpliedCorrelation.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'EquityIndices.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price / unusual layout'
+
+  - source: bbg_adhoc_px
+    file: 'EquityLSFactor.parquet'
+    include: true
+    dataset: index_px
+    note: 'equity L/S factor indices (+ total return field)'
+
+  - source: bbg_adhoc_px
+    file: 'EquityRealizedCorrelation.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'EuroCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'fgrove_sentiment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'FrenchAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'FutPX.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'FX/other generic futures snapshot'
+
+  - source: bbg_adhoc_px
+    file: 'FuturesData.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'generic futures snapshot'
+
+  - source: bbg_adhoc_px
+    file: 'FX.parquet'
+    include: true
+    dataset: fx_spot
+    note: 'FX spot (long by field)'
+
+  - source: bbg_adhoc_px
+    file: 'FX2.parquet'
+    include: true
+    dataset: fx_spot
+    note: 'FX spot, 6 EM pairs'
+
+  - source: bbg_adhoc_px
+    file: 'FXCarry.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX carry indices'
+
+  - source: bbg_adhoc_px
+    file: 'FXCarryBenchmark.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX carry benchmarks'
+
+  - source: bbg_adhoc_px
+    file: 'FXCarryIndices.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX carry indices'
+
+  - source: bbg_adhoc_px
+    file: 'FXForwardLongIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX forward long indices'
+
+  - source: bbg_adhoc_px
+    file: 'FXForwardShortIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX forward short indices'
+
+  - source: bbg_adhoc_px
+    file: 'FXFuts.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'FX generic futures snapshot'
+
+  - source: bbg_adhoc_px
+    file: 'FXHedgeCost.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'G10SwapRates.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'GDPNow.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price / unusual layout'
+
+  - source: bbg_adhoc_px
+    file: 'GermanAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'GoldmanSachs1.parquet'
+    include: true
+    dataset: index_px
+    note: 'GS strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'GoldmanSachsCommodities.parquet'
+    include: true
+    dataset: index_px
+    note: 'GS commodity indices'
+
+  - source: bbg_adhoc_px
+    file: 'GoldmanSurprise.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'hf_indices.parquet'
+    include: true
+    dataset: index_px
+    note: 'hedge fund indices'
+
+  - source: bbg_adhoc_px
+    file: 'HighYieldVIX.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'HungaryCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'index_construction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price / unusual layout'
+
+  - source: bbg_adhoc_px
+    file: 'IndiaCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'IndividiualFXCarryReturns.parquet'
+    include: true
+    dataset: index_px
+    note: 'FX carry by pair'
+
+  - source: bbg_adhoc_px
+    file: 'inventories.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'InvoiceSpread.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'IPOData.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price / unusual layout'
+
+  - source: bbg_adhoc_px
+    file: 'IsraelCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'IsraelInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'ItalyAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'iTraxxCDSIndex.parquet'
+    include: true
+    dataset: index_px
+    note: 'iTraxx CDS indices'
+
+  - source: bbg_adhoc_px
+    file: 'JapanCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'JapanInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'JPMiDexLSFactors.parquet'
+    include: true
+    dataset: index_px
+    note: 'JPM factor indices'
+
+  - source: bbg_adhoc_px
+    file: 'JPMTickers1.parquet'
+    include: true
+    dataset: index_px
+    note: 'JPM strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'KoreanAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'LeveragedFundFlow.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'MexicoCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'MexicoInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'MS.parquet'
+    include: true
+    dataset: index_px
+    note: 'MS strategy indices'
+
+  - source: bbg_adhoc_px
+    file: 'MSCIBenchmarks.parquet'
+    include: true
+    dataset: index_px
+    note: 'MSCI indices (+ PE/EPS fields kept as extra columns)'
+
+  - source: bbg_adhoc_px
+    file: 'MSCIETFs.parquet'
+    include: true
+    dataset: index_px
+    note: 'MSCI ETFs (+ total return field)'
+
+  - source: bbg_adhoc_px
+    file: 'NorwayCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'NZealandCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'PolandCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'precious_metals.parquet'
+    include: true
+    dataset: fut_generic
+    note: 'GC/SI/PL generic futures snapshot'
+
+  - source: bbg_adhoc_px
+    file: 'PreciousMetalCross.parquet'
+    include: true
+    dataset: index_px
+    note: 'precious metal crosses'
+
+  - source: bbg_adhoc_px
+    file: 'RawFactorPX.parquet'
+    include: true
+    dataset: index_px
+    note: 'JPM factor index prices'
+
+  - source: bbg_adhoc_px
+    file: 'RussiaCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SAfrcaInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SAfricaCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SGITransaction.parquet'
+    include: true
+    dataset: index_px
+    note: 'SG indices'
+
+  - source: bbg_adhoc_px
+    file: 'SKoreaCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SovYields.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SpotRates.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SPX.parquet'
+    include: true
+    dataset: index_px
+    note: 'SPX (+ target price, RT112)'
+
+  - source: bbg_adhoc_px
+    file: 'SupplyDemand.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SwedenCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SwedenInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'SwissCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'TermPremia.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'TreasuryAllotment.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'TreasuryAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'TrendIndices.parquet'
+    include: true
+    dataset: index_px
+    note: 'CTA / trend indices'
+
+  - source: bbg_adhoc_px
+    file: 'TSYAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'TSYDebtOutstanding.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'UKAuction.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'UKCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'UKInfCurve.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'USDBRatesSwaption.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'USDInfSwap.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'USRates.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'USSwapSpread.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'VesselData.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'Volatilities.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'
+
+  - source: bbg_adhoc_px
+    file: 'yields.parquet'
+    include: false
+    dataset: index_px
+    note: 'not price (curve / yield / auction / sentiment / positioning / vol / correlation / macro)'

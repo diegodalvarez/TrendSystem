@@ -1,0 +1,18 @@
+# Which series is the default when no origin is asked for.
+# Used by scripts/build_series_index.py (and later by the access objects). Edit by hand.
+
+# longest_span: the series with the longest date span (last date - first date) of the
+# default field wins. Ties -> more rows, then the later last date.
+rule: longest_span
+default_field: close
+
+# Force a specific origin for a ticker. Key = Bloomberg ticker (or instrument_id),
+# value = part of the origin file name. Example:
+#   overrides:
+#     GC1 Comdty: 1CommodityExchange
+overrides: {}
+
+# Bloomberg roots that are the same instrument as a catalogue entry with another
+# yellow key. "<root> <yellow key>": instrument_id
+instrument_aliases:
+  BTC Curncy: fut.BTC        # user 2026-11-14: BTC1 Curncy = BTC1 Comdty
